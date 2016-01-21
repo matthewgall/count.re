@@ -17,6 +17,18 @@ def mailgunVerify(os.getenv('MAILGUN_TOKEN'), token, timestamp, signature):
 		msg='{}{}'.format(timestamp, token),
 		digestmod=hashlib.sha256).hexdigest()
 
+@route('/version')
+def return_version():
+	try:
+		dirname, filename = os.path.split(os.path.abspath(__file__))
+		del filename
+		f = open(os.getenv('VERSION_PATH', dirname + '/.git/refs/heads/master'), 'r')
+		content = f.read()
+		response.content_type = 'text/plain'
+		return content
+	except:
+		return "Unable to open version file."
+		
 @route('/import/mailgun')
 def incrementCountMail():
 	return True
