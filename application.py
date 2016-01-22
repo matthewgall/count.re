@@ -18,6 +18,7 @@ def mailgunVerify(mailToken, mailTimestamp, mailSignature):
 		digestmod=hashlib.sha256).hexdigest()
 
 @route('/favicon.ico')
+@route('/import/mailgun', method='GET')
 @error(404)
 def error404():
 	response.status = 404
@@ -26,7 +27,7 @@ def error404():
 @error(403)
 def error403(error):
 	response.status = 403
-	return 'Signature verification failed, forbidden'
+	return 'Access forbidden'
 	
 @route('/version')
 def return_version():
