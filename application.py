@@ -11,10 +11,10 @@ import socket
 from bottle import route, request, response, error, default_app, view, static_file
 from tinydb import TinyDB, where
 
-def mailgunVerify(os.getenv('MAILGUN_TOKEN'), token, timestamp, signature):
-	return signature == hmac.new(
-		key=api_key,
-		msg='{}{}'.format(timestamp, token),
+def mailgunVerify(mailgunToken, mailToken, mailTimestamp, mailSignature):
+	return mailSignature == hmac.new(
+		key=mailgunToken,
+		msg='{}{}'.format(mailTimestamp, mailToken),
 		digestmod=hashlib.sha256).hexdigest()
 
 @route('/version')
@@ -31,6 +31,12 @@ def return_version():
 		
 @route('/import/mailgun')
 def incrementCountMail():
+
+	emailAddress = request.forms.get('Sender')
+
+	emailToken = request.forms.get('token')
+	emailTimestamp = request.forms.get('timestamp')
+
 	return True
 
 @route('/count/<id>', method='GET')
@@ -52,6 +58,9 @@ if __name__ == '__main__':
 	serverHost = os.getenv('SERVER_HOST', 'localhost')
 	serverPort = os.getenv('SERVER_PORT', '5000')
 	
+	mailgunToken = os.getenv('MAILGUN_TOKEN', '')
+	logentriesToken = os.getenv('LOGENTRIES_TOKEN', '')
+
 	# Now we're ready, so start the server
 	# Instantiate the logger
 	log = logging.getLogger('log')
@@ -59,10 +68,10 @@ if __name__ == '__main__':
 	log.setLevel(logging.INFO)
 	log.addHandler(console)
 
-	if os.getenv('LOGENTRIES_TOKEN', '') != '':
+	if logentriesToken != '':
 		log.addHandler(LogentriesHandler(os.getenv('LOGENTRIES_TOKEN', '')))
 
-	if os.getenv('MAILGUN_TOKEN', '') == '':
+	if mailgunToken == '':
 		log.error('Failed to connect to the Mailgun API.')
 		exit(1)
 
