@@ -8,15 +8,26 @@ import hmac
 import logging
 import socket
 
-from bottle import route, request, response, error, default_app, view, static_file
+from bottle import route, request, response, error, default_app, view, static_file, HTTPError
 from tinydb import TinyDB, where
 
-def mailgunVerify(mailgunToken, mailToken, mailTimestamp, mailSignature):
+def mailgunVerify(mailToken, mailTimestamp, mailSignature):
 	return mailSignature == hmac.new(
 		key=mailgunToken,
 		msg='{}{}'.format(mailTimestamp, mailToken),
 		digestmod=hashlib.sha256).hexdigest()
 
+@route('/favicon.ico')
+@error(404)
+def error404():
+	response.status = 404
+	return 'Not Found'
+
+@error(403)
+def error403(error):
+	response.status = 403
+	return 'Signature verification failed, forbidden'
+	
 @route('/version')
 def return_version():
 	try:
@@ -29,7 +40,7 @@ def return_version():
 	except:
 		return "Unable to open version file."
 		
-@route('/import/mailgun')
+@route('/import/mailgun', method="POST")
 def incrementCountMail():
 
 	emailAddress = request.forms.get('sender')
@@ -39,8 +50,12 @@ def incrementCountMail():
 	emailToken = request.forms.get('token')
 	emailTimestamp = request.forms.get('timestamp')
 	emailSignature = request.forms.get('signature')
-
-	return True
+	
+	if not mailgunVerify(emailToken, emailTimestamp, emailSignature):
+		log.info("Discarding e-mail from " + emailAddress, " , signature verification failed")
+		raise HTTPError(403)
+	else:
+		return "This will work!"
 
 @route('/count/<id>', method='GET')
 def getCounter(id):
