@@ -32,10 +32,13 @@ def return_version():
 @route('/import/mailgun')
 def incrementCountMail():
 
-	emailAddress = request.forms.get('Sender')
-
+	emailAddress = request.forms.get('sender')
+	emailRecipient = request.forms.get('recipient')
+	emailSubject = request.forms.get('subject')
+	
 	emailToken = request.forms.get('token')
 	emailTimestamp = request.forms.get('timestamp')
+	emailSignature = request.forms.get('signature')
 
 	return True
 
