@@ -55,7 +55,8 @@ def incrementCountMail():
 		log.info("Discarding e-mail from " + emailAddress, " , signature verification failed")
 		raise HTTPError(403)
 	else:
-		return "This will work!"
+		log.info("Accepted e-mail from " + emailAddress + ", (recipient: " + emailRecipient + ")")
+		return "Accepted"
 
 @route('/count/<id>', method='GET')
 def getCounter(id):
