@@ -8,7 +8,8 @@ import logging
 import socket
 
 from bottle import route, request, response, error, default_app, view, static_file, HTTPError
-from tinydb import TinyDB, Query, where
+from tinydb import TinyDB, Query
+from tinydb.operations import increment
 
 def mailgunVerify(mailToken, mailTimestamp, mailSignature):
     return mailSignature == hmac.new(
@@ -75,7 +76,12 @@ def incrementCountMail():
         log.info(counterID + " is not currently active, and therefore will not be incremented")
         return returnError(404, "Counter not found")
     
-    return "accepted"
+    # We found the key, so now we can increment it
+    db.update(increment('value'), counter.id == counterID)
+    
+    # And return our success message
+    log.info("Successfully incremented counter: " + counterID)
+    return returnError(200, "Successfully updated value for " + counterID)
     
 @route('/count/<id>', method='GET')
 def getCounter(id):
