@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import json
 import hashlib
 import hmac
@@ -79,7 +78,7 @@ if __name__ == '__main__':
 
     app = default_app()
 
-    appReload = os.getenv('APP_RELOAD', False)
+    appReload = bool(os.getenv('APP_RELOAD', False))
     appSecret = os.getenv('APP_SECRET', '')
     
     serverHost = os.getenv('SERVER_HOST', 'localhost')
