@@ -8,7 +8,7 @@ import logging
 import socket
 
 from bottle import route, request, response, error, default_app, view, static_file, HTTPError
-from tinydb import TinyDB, where
+from tinydb import TinyDB, Query, where
 
 def mailgunVerify(mailToken, mailTimestamp, mailSignature):
     return mailSignature == hmac.new(
@@ -16,12 +16,16 @@ def mailgunVerify(mailToken, mailTimestamp, mailSignature):
         msg='{}{}'.format(mailTimestamp, mailToken),
         digestmod=hashlib.sha256).hexdigest()
 
+def returnError(code, msg):
+    response.status = int(code)
+    return msg
+
 @route('/favicon.ico')
 @route('/import/mailgun', method='GET')
 @error(404)
 def error404():
     response.status = 404
-    return 'Not Found'
+    return "Not Found"
 
 @error(403)
 def error403(error):
@@ -45,23 +49,34 @@ def incrementCountMail():
 
     if mailgunToken == '':
         log.error('Received call to /import/mailgun with MAILGUN_TOKEN not set. E-mail processing disabled.')
-        raise HTTPError(404)
+        return returnError(404, "MAILGUN_TOKEN not set. E-mail processing disabled.")
     
-    emailAddress = request.forms.get('sender')
-    emailRecipient = request.forms.get('recipient')
-    emailSubject = request.forms.get('subject')
-    
-    emailToken = request.forms.get('token')
-    emailTimestamp = request.forms.get('timestamp')
-    emailSignature = request.forms.get('signature')
-    
+    try:
+        emailAddress = request.forms.get('sender')
+        emailRecipient = request.forms.get('recipient')
+        emailSubject = request.forms.get('subject')
+        
+        emailToken = request.forms.get('token')
+        emailTimestamp = request.forms.get('timestamp')
+        emailSignature = request.forms.get('signature')
+        
+        counterID = emailRecipient.split('@')[0]
+    except AttributeError:
+        return returnError(400, "Bad request, data received was in an unexpected format")
+        
     if not mailgunVerify(emailToken, emailTimestamp, emailSignature):
         log.info("Discarding e-mail from " + emailAddress, " , signature verification failed")
-        raise HTTPError(403)
+        return returnError(401, "Signature verification failed")
     else:
         log.info("Accepted e-mail from " + emailAddress + ", (recipient: " + emailRecipient + ")")
-        return "Accepted"
 
+    # Now, we are going to determine if the counter is active
+    if len(db.search(counter.id == counterID)) < 1:
+        log.info(counterID + " is not currently active, and therefore will not be incremented")
+        return returnError(404, "Counter not found")
+    
+    return "accepted"
+    
 @route('/count/<id>', method='GET')
 def getCounter(id):
     return getCounter
@@ -103,6 +118,10 @@ if __name__ == '__main__':
     if mailgunToken == '':
         log.error('Unable to connect to mailgun API. Incrementing counters via e-mail will be disabled. Set MAILGUN_TOKEN to your domain API key and restart.')
 
+    # Instantiate a connection to the database
+    db = TinyDB(os.getenv('APP_DATABASE', 'db/app.json'))
+    counter = Query()
+    
     # Now we're ready, so start the server
     try:
         log.info("Successfully started application server on " + socket.gethostname())
