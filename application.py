@@ -63,18 +63,18 @@ def incrementCountMail():
         
         counterID = emailRecipient.split('@')[0]
     except AttributeError:
-        return returnError(400, "Bad request, data received was in an unexpected format")
+        return returnError(200, "Bad request, data received was in an unexpected format")
         
     if not mailgunVerify(emailToken, emailTimestamp, emailSignature):
         log.info("Discarding e-mail from " + emailAddress, " , signature verification failed")
-        return returnError(401, "Signature verification failed")
+        return returnError(200, "Signature verification failed")
     else:
         log.info("Accepted e-mail from " + emailAddress + ", (recipient: " + emailRecipient + ")")
 
     # Now, we are going to determine if the counter is active
     if len(db.search(counter.id == counterID)) < 1:
         log.info(counterID + " is not currently active, and therefore will not be incremented")
-        return returnError(404, "Counter not found")
+        return returnError(200, "Counter not found")
     
     # We found the key, so now we can increment it
     db.update(increment('value'), counter.id == counterID)
