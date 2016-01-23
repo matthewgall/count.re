@@ -44,6 +44,10 @@ def return_version():
 @route('/import/mailgun', method="POST")
 def incrementCountMail():
 
+	if mailgunToken == '':
+		log.error('Received call to /import/mailgun with MAILGUN_TOKEN not set. E-mail processing disabled.')
+		raise HTTPError(404)
+	
 	emailAddress = request.forms.get('sender')
 	emailRecipient = request.forms.get('recipient')
 	emailSubject = request.forms.get('subject')
@@ -99,7 +103,6 @@ if __name__ == '__main__':
 	
 	if mailgunToken == '':
 		log.error('Unable to connect to mailgun API. Incrementing counters via e-mail will be disabled. Set MAILGUN_TOKEN to your domain API key and restart.')
-		exit(1)
 
 	# Now we're ready, so start the server
 	try:
