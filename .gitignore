@@ -7,6 +7,9 @@ lib/
 ## pip ##
 pip-selfcheck.json
 
+## pylint ##
+*.pylint
+
 ## codio ##
 .codio
 local/
