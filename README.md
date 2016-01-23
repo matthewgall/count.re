@@ -7,6 +7,9 @@ Sometimes we just need a counter, nothing magic, just a simple counter. Incremen
 ## Introducing count.re
 Powered by Python and bottle, count.re is quick and simple to deploy, using all the power of [Docker](https://docker.io) you can be up and running in one command!
 
+## Developing
+To make editing easy, we're using Cloud9, an online IDE to allow you to get started quickly and simply! Getting started is easy, [click here](https://ide.c9.io/matthewgall/countre) and follow the instructions
+
 ## Deploying
 Deploying count.re is easy using Docker:
 
