@@ -75,6 +75,9 @@ if __name__ == '__main__':
 
 	app = default_app()
 
+	appReload = os.getenv('APP_RELOAD', False)
+	appSecret = os.getenv('APP_SECRET', '')
+	
 	serverHost = os.getenv('SERVER_HOST', 'localhost')
 	serverPort = os.getenv('SERVER_PORT', '5000')
 	
@@ -91,13 +94,16 @@ if __name__ == '__main__':
 	if logentriesToken != '':
 		log.addHandler(LogentriesHandler(os.getenv('LOGENTRIES_TOKEN', '')))
 
+	if appSecret == '':
+		log.error('Secure tokens disabled, using empty secret. Cookies will not be encrypted. Set APP_SECRET to secure seed and restart.')
+	
 	if mailgunToken == '':
-		log.error('Failed to connect to the Mailgun API.')
+		log.error('Unable to connect to mailgun API. Incrementing counters via e-mail will be disabled. Set MAILGUN_TOKEN to your domain API key and restart.')
 		exit(1)
 
 	# Now we're ready, so start the server
 	try:
 		log.info("Successfully started application server on " + socket.gethostname())
-		app.run(host=serverHost, port=serverPort)
+		app.run(host=serverHost, port=serverPort, reloader=bool(appReload))
 	except:
 		log.error("Failed to start application server on " + socket.gethostname())
