@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 
 import os
-import ujson
 import hashlib
 import hmac
 import logging
 import socket
 
+import ujson
 from bottle import route, request, response, error, default_app, view, static_file, HTTPError
 from tinydb import TinyDB, Query
 from tinydb.operations import increment
 from tinydb_smartcache import SmartCacheTable
 
-def mailgunVerify(mailToken, mailTimestamp, mailSignature):
-    return mailSignature == hmac.new(
-        key=mailgunToken,
-        msg='{}{}'.format(mailTimestamp, mailToken),
+def mailgunVerify(mail_token, mail_timestamp, mail_signature):
+    return mail_signature == hmac.new(
+        key=mailgun_token,
+        msg='{}{}'.format(mail_timestamp, mail_token),
         digestmod=hashlib.sha256).hexdigest()
 
 def returnError(code, msg, contentType="text/plain"):
@@ -34,7 +34,7 @@ def error404():
 def error403(error):
     response.status = 403
     return 'Access forbidden'
-    
+
 @route('/version')
 def return_version():
     try:
@@ -46,83 +46,83 @@ def return_version():
         return content
     except:
         return "Unable to open version file."
-        
+
 @route('/import/mailgun', method="POST")
 def incrementCountMail():
 
     if mailgunToken == '':
-        log.error('Received call to /import/mailgun with MAILGUN_TOKEN not set. E-mail processing disabled.')
+        log.error('MAILGUN_TOKEN not set. E-mail processing disabled.')
         return returnError(404, "MAILGUN_TOKEN not set. E-mail processing disabled.")
-    
+
     try:
-        emailAddress = request.forms.get('sender')
-        emailRecipient = request.forms.get('recipient')
-        emailSubject = request.forms.get('subject')
-        
-        emailToken = request.forms.get('token')
-        emailTimestamp = request.forms.get('timestamp')
-        emailSignature = request.forms.get('signature')
-        
-        counterID = emailRecipient.split('@')[0]
+        email_address = request.forms.get('sender')
+        email_recipient = request.forms.get('recipient')
+        email_subject = request.forms.get('subject')
+
+        email_token = request.forms.get('token')
+        email_timestamp = request.forms.get('timestamp')
+        email_signature = request.forms.get('signature')
+
+        counter_id = email_recipient.split('@')[0]
     except AttributeError:
         return returnError(200, "Bad request, data received was in an unexpected format")
-        
-    if not mailgunVerify(emailToken, emailTimestamp, emailSignature):
-        log.info("Discarding e-mail from " + emailAddress, " , signature verification failed")
+
+    if not mailgunVerify(email_token, email_timestamp, email_signature):
+        log.info("Discarding e-mail from " + email_address, " , signature verification failed")
         return returnError(200, "Signature verification failed")
     else:
-        log.info("Accepted e-mail from " + emailAddress + ", (recipient: " + emailRecipient + ")")
+        log.info("Accepted e-mail from " + email_address + ", (recipient: " + email_recipient + ")")
 
     # Now, we are going to determine if the counter is active
-    if len(db.search(counter.id == counterID)) < 1:
-        log.info(counterID + " is not currently active, and therefore will not be incremented")
+    if len(db.search(counter.id == counter_id)) < 1:
+        log.info(counter_id + " is not currently active, and therefore will not be incremented")
         return returnError(200, "Counter not found")
-    
+
     # We found the key, so now we can increment it
-    db.update(increment('value'), counter.id == counterID)
-    
+    db.update(increment('value'), counter.id == counter_id)
+
     # And return our success message
-    log.info("Successfully incremented counter: " + counterID)
-    return returnError(200, "Successfully updated value for " + counterID)
+    log.info("Successfully incremented counter: " + counter_id)
+    return returnError(200, "Successfully updated value for " + counter_id)
 
 @route('/count/<id>', method='GET')
 def getCounter(id):
-    
+
     # Find the counter
-    countInfo = db.search(counter.id == id)
-    
-    if len(countInfo) < 1:
+    count_info = db.search(counter.id == id)
+
+    if len(count_info) < 1:
         return returnError(404, "Counter not found")
-    
+
     # And return our success message
     content = {
         "id": id,
-        "name": countInfo[0]["name"],
-        "buttonText": countInfo[0]["buttonText"],
-        "value": countInfo[0]["value"],
+        "name": count_info[0]["name"],
+        "buttonText": count_info[0]["buttonText"],
+        "value": count_info[0]["value"],
         "logs": []
     }
-    
+
     return returnError(200, ujson.dumps(content), "application/json")
-    
+
 @route('/count/<id>', method='POST')
 def incrementCounter(id):
-    
+
     if id == "create":
         # We're going to create a new counter, and return a JSON blob of the URL
         return "success"
     else:
         # We are going to determine if the counter is active
-        if len(db.search(counter.id == counterID)) < 1:
-            log.info(counterID + " is not currently active, and therefore will not be incremented")
+        if len(db.search(counter.id == id)) < 1:
+            log.info(id + " is not currently active, and therefore will not be incremented")
             return returnError(404, "Counter not found")
-    
+
         # We found the key, so now we can increment it
-        db.update(increment('value'), counter.id == counterID)
-    
+        db.update(increment('value'), counter.id == id)
+
         # And return our success message
-        log.info("Successfully incremented counter: " + counterID)
-        return returnError(200, "Successfully updated value for " + counterID)
+        log.info("Successfully incremented counter: " + id)
+        return returnError(200, "Successfully updated value for " + id)
 
 @route('/')
 def index():
@@ -134,10 +134,10 @@ if __name__ == '__main__':
 
     appReload = bool(os.getenv('APP_RELOAD', False))
     appSecret = os.getenv('APP_SECRET', '')
-    
+
     serverHost = os.getenv('SERVER_HOST', 'localhost')
     serverPort = os.getenv('SERVER_PORT', '5000')
-    
+
     mailgunToken = os.getenv('MAILGUN_TOKEN', '')
     logentriesToken = os.getenv('LOGENTRIES_TOKEN', '')
 
@@ -149,19 +149,23 @@ if __name__ == '__main__':
     log.addHandler(console)
 
     if logentriesToken != '':
-        log.addHandler(LogentriesHandler(os.getenv('LOGENTRIES_TOKEN', '')))
+        log.addHandler(LogentriesHandler(logentriesToken))
 
     if appSecret == '':
-        log.error('Secure tokens disabled, using empty secret. Cookies will not be encrypted. Set APP_SECRET to secure seed and restart.')
-    
+        log.error(
+            'Secure tokens disabled, using empty secret. Set APP_SECRET to secure seed and restart.'
+        )
+
     if mailgunToken == '':
-        log.error('Unable to connect to mailgun API. Incrementing counters via e-mail will be disabled. Set MAILGUN_TOKEN to your domain API key and restart.')
+        log.error(
+            'Unable to connect to mailgun API. Incrementing counters via e-mail will be disabled.'
+        )
 
     # Instantiate a connection to the database
     TinyDB.table_class = SmartCacheTable
     db = TinyDB(os.getenv('APP_DATABASE', 'db/app.json'))
     counter = Query()
-    
+
     # Now we're ready, so start the server
     try:
         log.info("Successfully started application server on " + socket.gethostname())
