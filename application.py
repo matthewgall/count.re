@@ -7,10 +7,9 @@ import logging
 import socket
 
 import ujson
-from bottle import route, request, response, error, default_app, view, static_file, HTTPError
+from bottle import route, request, response, error, default_app, view, static_file, template, HTTPError
 from tinydb import TinyDB, Query
 from tinydb.operations import increment
-from tinydb_smartcache import SmartCacheTable
 
 def mailgunVerify(mail_token, mail_timestamp, mail_signature):
     return mail_signature == hmac.new(
@@ -34,6 +33,10 @@ def error404():
 def error403(error):
     response.status = 403
     return 'Access forbidden'
+
+@route('/static/<filepath:path>')
+def server_static(filepath):
+    return static_file(filepath, root='views/static')
 
 @route('/version')
 def return_version():
@@ -103,7 +106,13 @@ def getCounter(id):
         "logs": []
     }
 
-    return returnError(200, ujson.dumps(content), "application/json")
+    return template('counter',
+        id = id,
+        name = count_info[0]["name"],
+        buttonText = count_info[0]["buttonText"],
+        value = count_info[0]["value"]
+    )
+    # return returnError(200, ujson.dumps(content), "application/json")
 
 @route('/count/<id>', method='POST')
 def incrementCounter(id):
@@ -126,7 +135,7 @@ def incrementCounter(id):
 
 @route('/')
 def index():
-    return "Hello, world!"
+    return template('home')
 
 if __name__ == '__main__':
 
@@ -162,7 +171,6 @@ if __name__ == '__main__':
         )
 
     # Instantiate a connection to the database
-    TinyDB.table_class = SmartCacheTable
     db = TinyDB(os.getenv('APP_DATABASE', 'db/app.json'))
     counter = Query()
 
