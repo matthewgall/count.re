@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-import json
+import ujson
 import hashlib
 import hmac
 import logging
@@ -103,7 +103,7 @@ def getCounter(id):
         "logs": []
     }
     
-    return returnError(200, json.dumps(content), "application/json")
+    return returnError(200, ujson.dumps(content), "application/json")
     
 @route('/count/<id>', method='POST')
 def incrementCounter(id):
