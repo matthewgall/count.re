@@ -14,7 +14,7 @@ from tinydb_smartcache import SmartCacheTable
 
 def mailgunVerify(mail_token, mail_timestamp, mail_signature):
     return mail_signature == hmac.new(
-        key=mailgun_token,
+        key=mailgunToken,
         msg='{}{}'.format(mail_timestamp, mail_token),
         digestmod=hashlib.sha256).hexdigest()
 
