@@ -12,7 +12,7 @@
                 <h3 class="panel-title">Increment by button</h3>
             </div>
             <div class="panel-body">
-                <form class="form-horizontal">
+                <form class="form-horizontal" method="POST" action="?method=web">
                     <fieldset>
                         <div class="form-group">
                             <div class="col-lg-12">
@@ -45,13 +45,6 @@
                 Increment your counter using curl:
                 </p>
                 <pre>curl -X POST https://count.re/count/{{id}}</pre>
-                
-                <p>
-                Or use Python:
-                </p>
-                <pre style="text-align: left">
-                import requests
-                requests.post('https://count.re/count/{{id}}')</pre>
             </div>
         </div>
     </div>

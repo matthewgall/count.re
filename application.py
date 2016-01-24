@@ -7,7 +7,7 @@ import logging
 import socket
 
 import ujson
-from bottle import route, request, response, error, default_app, view, static_file, template, HTTPError
+from bottle import route, request, response, redirect, error, default_app, view, static_file, template, HTTPError
 from tinydb import TinyDB, Query
 from tinydb.operations import increment
 
@@ -116,10 +116,37 @@ def getCounter(id):
 
 @route('/count/<id>', method='POST')
 def incrementCounter(id):
-
     if id == "create":
         # We're going to create a new counter, and return a JSON blob of the URL
-        return "success"
+        counter_id = hashlib.sha224(os.urandom(9)).hexdigest()[:9]
+        counter_name = request.forms.get('counterName')
+        counter_buttonText = request.forms.get('counterButton')
+
+        # Deal with empty submissions by providing example data
+        if counter_name == "" or counter_name == None:
+            counter_name = "Untitled"
+        if counter_buttonText == "" or counter_buttonText == None:
+            counter_buttonText = "Click Here"
+
+        # Now, we create the counter using the information we have
+        db.insert({
+            'id': counter_id,
+            'name': counter_name,
+            'buttonText': counter_buttonText,
+            'value': 0
+        })
+
+        # And now that is done, we'll return a success message, or a redirect
+        log.info("Successfully created counter: " + counter_id)
+
+        if request.query.method == 'web':
+            return redirect("/count/" + counter_id)
+        else:
+            content = {
+                "id": counter_id,
+                "url": "https://count.re/count/" + counter_id,
+            }
+            return returnError(200, ujson.dumps(content), "application/json")
     else:
         # We are going to determine if the counter is active
         if len(db.search(counter.id == id)) < 1:
@@ -131,7 +158,11 @@ def incrementCounter(id):
 
         # And return our success message
         log.info("Successfully incremented counter: " + id)
-        return returnError(200, "Successfully updated value for " + id)
+        
+        if request.query.method == 'web':
+            return redirect("/count/" + id)
+        else:
+            return returnError(200, "Successfully updated value for " + id)
 
 @route('/')
 def index():
