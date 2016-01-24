@@ -17,8 +17,9 @@ def mailgunVerify(mailToken, mailTimestamp, mailSignature):
         msg='{}{}'.format(mailTimestamp, mailToken),
         digestmod=hashlib.sha256).hexdigest()
 
-def returnError(code, msg):
+def returnError(code, msg, contentType="text/plain"):
     response.status = int(code)
+    response.content_type = contentType
     return msg
 
 @route('/favicon.ico')
@@ -85,11 +86,39 @@ def incrementCountMail():
     
 @route('/count/<id>', method='GET')
 def getCounter(id):
-    return getCounter
+    
+    # Find the counter
+    countInfo = db.search(counter.id == id)
+    
+    if len(countInfo) < 1:
+        return returnError(404, "Counter not found")
+    
+    # And return our success message
+    content = {
+        'id': id,
+        'value': countInfo[0]['value']
+    }
+    
+    return returnError(200, json.dumps(content), "application/json")
     
 @route('/count/<id>', method='POST')
 def incrementCounter(id):
-    return getCounter
+    
+    if id == "create":
+        # We're going to create a new counter, and return a JSON blob of the URL
+        return "success"
+    else:
+        # We are going to determine if the counter is active
+        if len(db.search(counter.id == counterID)) < 1:
+            log.info(counterID + " is not currently active, and therefore will not be incremented")
+            return returnError(404, "Counter not found")
+    
+        # We found the key, so now we can increment it
+        db.update(increment('value'), counter.id == counterID)
+    
+        # And return our success message
+        log.info("Successfully incremented counter: " + counterID)
+        return returnError(200, "Successfully updated value for " + counterID)
 
 @route('/')
 def index():
