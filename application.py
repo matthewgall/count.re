@@ -10,6 +10,7 @@ import socket
 from bottle import route, request, response, error, default_app, view, static_file, HTTPError
 from tinydb import TinyDB, Query
 from tinydb.operations import increment
+from tinydb_smartcache import SmartCacheTable
 
 def mailgunVerify(mailToken, mailTimestamp, mailSignature):
     return mailSignature == hmac.new(
@@ -83,7 +84,7 @@ def incrementCountMail():
     # And return our success message
     log.info("Successfully incremented counter: " + counterID)
     return returnError(200, "Successfully updated value for " + counterID)
-    
+
 @route('/count/<id>', method='GET')
 def getCounter(id):
     
@@ -95,8 +96,11 @@ def getCounter(id):
     
     # And return our success message
     content = {
-        'id': id,
-        'value': countInfo[0]['value']
+        "id": id,
+        "name": countInfo[0]["name"],
+        "buttonText": countInfo[0]["buttonText"],
+        "value": countInfo[0]["value"],
+        "logs": []
     }
     
     return returnError(200, json.dumps(content), "application/json")
@@ -154,6 +158,7 @@ if __name__ == '__main__':
         log.error('Unable to connect to mailgun API. Incrementing counters via e-mail will be disabled. Set MAILGUN_TOKEN to your domain API key and restart.')
 
     # Instantiate a connection to the database
+    TinyDB.table_class = SmartCacheTable
     db = TinyDB(os.getenv('APP_DATABASE', 'db/app.json'))
     counter = Query()
     

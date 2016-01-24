@@ -1,3 +1,4 @@
 bottle
 tinydb
+tinydb_smartcache
 pylint
