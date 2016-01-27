@@ -6,24 +6,16 @@
             <p style="font-size: 42px;">
                 {{value}}
             </p>
-        </div>
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">Increment by button</h3>
-            </div>
-            <div class="panel-body">
-                <form class="form-horizontal" method="POST" action="?method=web">
-                    <fieldset>
-                        <div class="form-group">
-                            <div class="col-lg-12">
-                                <button type="submit" class="btn btn-primary">{{buttonText}}</button>
-                            </div>
+            <form class="form-horizontal" method="POST" action="?method=web">
+                <fieldset>
+                    <div class="form-group">
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-primary">{{buttonText}}</button>
                         </div>
-                    </fieldset>
-                </form>
-            </div>
+                    </div>
+                </fieldset>
+            </form>
         </div>
-        
         <div class="panel panel-primary">
             <div class="panel-heading">
                 <h3 class="panel-title">Increment by e-mail</h3>
