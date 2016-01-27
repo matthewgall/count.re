@@ -7,7 +7,7 @@ import logging
 import socket
 
 import ujson
-from bottle import route, request, response, redirect, error, default_app, view, static_file, template, HTTPError
+from bottle import route, request, response, redirect, hook, error, default_app, view, static_file, template, HTTPError
 from tinydb import TinyDB, Query
 from tinydb.operations import increment
 
@@ -21,6 +21,13 @@ def returnError(code, msg, contentType="text/plain"):
     response.status = int(code)
     response.content_type = contentType
     return msg
+
+@hook('before_request')
+def determine_content_type():
+    if request.headers.get('Accept') == "application/json":
+        response.content_type = 'application/json'    
+    elif request.headers.get('Accept') == "application/xml":
+        response.content_type = 'application/xml'
 
 @route('/favicon.ico')
 @route('/import/mailgun', method='GET')
@@ -102,17 +109,13 @@ def getCounter(id):
         "id": id,
         "name": count_info[0]["name"],
         "buttonText": count_info[0]["buttonText"],
-        "value": count_info[0]["value"],
-        "logs": []
+        "value": count_info[0]["value"]
     }
 
-    return template('counter',
-        id = id,
-        name = count_info[0]["name"],
-        buttonText = count_info[0]["buttonText"],
-        value = count_info[0]["value"]
-    )
-    # return returnError(200, ujson.dumps(content), "application/json")
+    if response.content_type == "application/json":
+        return returnError(200, ujson.dumps(content), "application/json")
+    else:
+        return template('counter', content)
 
 @route('/count/<id>', method='POST')
 def incrementCounter(id):
