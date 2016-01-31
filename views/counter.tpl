@@ -36,7 +36,7 @@
                 <p>
                 Increment your counter using curl:
                 </p>
-                <pre>curl -X POST https://count.re/count/{{id}}</pre>
+                <pre>curl -X POST https://count.re/{{id}}</pre>
             </div>
         </div>
     </div>

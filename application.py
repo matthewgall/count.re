@@ -95,6 +95,7 @@ def incrementCountMail():
     log.info("Successfully incremented counter: " + counter_id)
     return returnError(200, "Successfully updated value for " + counter_id)
 
+@route('/<id>', method='GET')
 @route('/count/<id>', method='GET')
 def getCounter(id):
 
@@ -117,6 +118,7 @@ def getCounter(id):
     else:
         return template('counter', content)
 
+@route('/<id>', method='POST')
 @route('/count/<id>', method='POST')
 def incrementCounter(id):
     if id == "create":
@@ -143,11 +145,11 @@ def incrementCounter(id):
         log.info("Successfully created counter: " + counter_id)
 
         if request.query.method == 'web':
-            return redirect("/count/" + counter_id)
+            return redirect("/" + counter_id)
         else:
             content = {
                 "id": counter_id,
-                "url": "https://count.re/count/" + counter_id,
+                "url": "https://count.re/" + counter_id,
             }
             return returnError(200, ujson.dumps(content), "application/json")
     else:
@@ -163,7 +165,7 @@ def incrementCounter(id):
         log.info("Successfully incremented counter: " + id)
         
         if request.query.method == 'web':
-            return redirect("/count/" + id)
+            return redirect("/" + id)
         else:
             return returnError(200, "Successfully updated value for " + id)
 
