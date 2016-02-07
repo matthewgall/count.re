@@ -3,7 +3,7 @@
     <div class="starter-template">
         <div class="well well-lg">
             <h1>{{name}}</h1>
-            <p style="font-size: 42px;">
+            <p id="counterVal" style="font-size: 42px;">
                 {{value}}
             </p>
             <form class="form-horizontal" method="POST" action="?method=web">

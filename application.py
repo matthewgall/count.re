@@ -7,9 +7,20 @@ import logging
 import socket
 
 import ujson
+
 from bottle import route, request, response, redirect, hook, error, default_app, view, static_file, template, HTTPError
+from bottle.ext.websocket import GeventWebSocketServer
+from bottle.ext.websocket import websocket
+
 from tinydb import TinyDB, Query
 from tinydb.operations import increment
+
+class StripPathMiddleware(object):
+    def __init__(self, app):
+        self.app = app
+    def __call__(self, e, h):
+        e['PATH_INFO'] = e['PATH_INFO'].rstrip('/')
+        return self.app(e,h)
 
 def mailgunVerify(mail_token, mail_timestamp, mail_signature):
     return mail_signature == hmac.new(
@@ -169,6 +180,21 @@ def incrementCounter(id):
         else:
             return returnError(200, "Successfully updated value for " + id)
 
+@route('/websocket', apply=[websocket])
+def websocketCounterGet(ws):
+    while True:
+        msg = ws.receive()
+        if msg is not None:
+            # Find the counter
+            count_info = db.search(counter.id == msg)
+        
+            if len(count_info) < 1:
+                ws.send("Not Found")
+            else:
+                # And return our success message
+                ws.send(str(count_info[0]["value"]))
+        else: break
+    
 @route('/')
 def index():
     return template('home')
@@ -176,7 +202,7 @@ def index():
 if __name__ == '__main__':
 
     app = default_app()
-
+    
     appReload = bool(os.getenv('APP_RELOAD', False))
     appSecret = os.getenv('APP_SECRET', '')
 
@@ -213,6 +239,6 @@ if __name__ == '__main__':
     # Now we're ready, so start the server
     try:
         log.info("Successfully started application server on " + socket.gethostname())
-        app.run(host=serverHost, port=serverPort, reloader=bool(appReload))
+        app.run(host=serverHost, port=serverPort, reloader=bool(appReload), server=GeventWebSocketServer)
     except:
         log.error("Failed to start application server on " + socket.gethostname())
