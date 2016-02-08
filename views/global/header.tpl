@@ -17,6 +17,9 @@ body {
     padding: 40px 15px;
     text-align: center;
 }
+.navbar-inverse, .panel-primary>.panel-heading, .btn-primary {
+    background-color: #0077da;
+}
 .footer {
     position: fixed;
     bottom: 0;
@@ -27,6 +30,7 @@ body {
 }
 .container .text-muted {
     margin: 20px 0;
+    color: #707070;
 }
 </style>
 </head>
