@@ -15,6 +15,8 @@ from bottle.ext.websocket import websocket
 from tinydb import TinyDB, Query
 from tinydb.operations import increment
 
+from pprint import pprint
+
 class StripPathMiddleware(object):
     def __init__(self, app):
         self.app = app
@@ -175,26 +177,26 @@ def incrementCounter(id):
         # And return our success message
         log.info("Successfully incremented counter: " + id)
         
+        # And inform the connected visitors
+        count_info = db.search(counter.id == id)
+        for visitor in visitors:
+            visitor.send(ujson.dumps(count_info))
+            
         if request.query.method == 'web':
             return redirect("/" + id)
         else:
             return returnError(200, "Successfully updated value for " + id)
 
 @route('/websocket', apply=[websocket])
-def websocketCounterGet(ws):
+def websocket(ws):
+    visitors.add(ws)
     while True:
         msg = ws.receive()
         if msg is not None:
-            # Find the counter
-            count_info = db.search(counter.id == msg)
-        
-            if len(count_info) < 1:
-                ws.send("Not Found")
-            else:
-                # And return our success message
-                ws.send(str(count_info[0]["value"]))
+            pass
         else: break
-    
+    visitors.remove(ws)
+
 @route('/')
 def index():
     return template('home')
@@ -236,6 +238,9 @@ if __name__ == '__main__':
     db = TinyDB(os.getenv('APP_DATABASE', 'db/app.json'))
     counter = Query()
 
+    # And an in memory database of connected users
+    visitors = set()
+    
     # Now we're ready, so start the server
     try:
         log.info("Successfully started application server on " + socket.gethostname())

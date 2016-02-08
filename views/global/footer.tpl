@@ -21,14 +21,14 @@
             console.log('Established websockets connection to wss://' + location.host + '/websocket')
         }
         ws.onmessage = function(evt) {
-            $('p#counterVal').text(evt.data);
+            var message = JSON.parse(evt.data);
+            if (message[0]['id'] == "{{id}}") {
+                $('p#counterVal').text(message[0]['value']);
+            }
         }
         ws.onclose = function(evt) {
             console.log('Closed websockets connection to wss://' + location.host + '/websocket')
         }
-        window.setInterval(function() {
-			ws.send("{{id}}");
-		}, 1000);
     });
 </script>
 % end
