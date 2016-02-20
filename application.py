@@ -83,8 +83,25 @@ def telegram():
     except:
         return returnError(200, "JSON object provided by Telegram was invalid")
 
-    log.info("Received message from " + telegramObj['message']['from']['username'])
-    print telegramObj['message']['text']
+    try:
+        telegramUser = telegramObj['message']['from']['username']
+        telegramChatID = telegramObj['message']['chat']['id']
+        telegramMessage = telegramObj['message']['text']
+        telegramMessageArray = telegramMessage.replace('/', '').split(' ')
+    except:
+        return returnError(200, "JSON object provided by Telegram was invalid")
+
+    log.info("Received message from " + telegramUser + ": " + telegramMessage)
+
+    if telegramMessageArray[0] == "create":
+        response = {
+            "method": "sendMessage"
+            "chat_id": telegramChatID,
+            "text": "We're not ready yet, but if this had worked, I'd have made a counter"
+        }
+        return returnError(200, ujson.dumps(response), "application/json")
+    else:
+        log.info("Encountered an unknown command: " + telegramMessageArray[0])
 
 @route('/import/mailgun', method="POST")
 def incrementCountMail():
