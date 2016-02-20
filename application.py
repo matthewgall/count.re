@@ -114,6 +114,21 @@ def telegram():
             "text": "Mmmmmm... hot off the press @" + telegramUser + ". Simply visit https://count.re/" + counter_id + " in your browser to get started"
         }
         return returnError(200, ujson.dumps(response), "application/json")
+    elif telegramMessageArray[0] in ["start", "help"]:
+        response = {
+            "method": "sendMessage",
+            "chat_id": telegramChatID,
+            "parse_mode": "markdown",
+            "text": "Getting started with count.re is easy: \
+            \
+            */create* - Will create a new counter, with some default values \
+            */list* - Will list the counters you have created \
+            */changetitle* - Will change the title of your counter \
+            */changebutton* - Will change the button text which appears when you visit the counter \
+            */info* - Will let you know all about a counter, including the URL \
+            */delete* - Will allow you to delete a counter you have created"
+        }
+        return returnError(200, ujson.dumps(response), "application/json")
     else:
         log.info("Encountered an unknown command: " + telegramMessageArray[0])
 
