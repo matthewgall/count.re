@@ -46,13 +46,11 @@ def determine_content_type():
 @route('/import/mailgun', method='GET')
 @error(404)
 def error404():
-    response.status = 404
-    return "Not Found"
+    return returnError(404, "Not Found")
 
 @error(403)
 def error403(error):
-    response.status = 403
-    return 'Access forbidden'
+    return returnError(403, "Access forbidden")
 
 @route('/static/<filepath:path>')
 def server_static(filepath):
@@ -69,6 +67,19 @@ def return_version():
         return content
     except:
         return "Unable to open version file."
+
+@route('/import/telegram', method="POST")
+def telegram():
+
+    if telegramToken == '':
+        log.error('TELEGRAM_TOKEN not set. Telegram interface disabled.')
+        return returnError(404, "TELEGRAM_TOKEN not set. Telegram interface disabled.")
+
+    try:
+        telegramObj = ujson.loads(request.body.read())
+        print telegramObj
+    except:
+        return returnError(200, "JSON object provided by Telegram was invalid")
 
 @route('/import/mailgun', method="POST")
 def incrementCountMail():
