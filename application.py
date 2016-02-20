@@ -95,7 +95,7 @@ def telegram():
 
     if telegramMessageArray[0] == "create":
         response = {
-            "method": "sendMessage"
+            "method": "sendMessage",
             "chat_id": telegramChatID,
             "text": "We're not ready yet, but if this had worked, I'd have made a counter"
         }
