@@ -24,6 +24,9 @@ class StripPathMiddleware(object):
         e['PATH_INFO'] = e['PATH_INFO'].rstrip('/')
         return self.app(e,h)
 
+def buildTelegramURI(path):
+    return "https://api.telegram.org/file/" + telegramToken + path
+
 def mailgunVerify(mail_token, mail_timestamp, mail_signature):
     return mail_signature == hmac.new(
         key=mailgunToken,
@@ -77,9 +80,11 @@ def telegram():
 
     try:
         telegramObj = ujson.loads(request.body.read())
-        print telegramObj
     except:
         return returnError(200, "JSON object provided by Telegram was invalid")
+
+    log.info("Received message from " + telegramObj['message']['from']['username'])
+    print telegramObj['message']['text']
 
 @route('/import/mailgun', method="POST")
 def incrementCountMail():
