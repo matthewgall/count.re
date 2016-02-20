@@ -223,6 +223,7 @@ if __name__ == '__main__':
     serverPort = os.getenv('SERVER_PORT', '5000')
 
     mailgunToken = os.getenv('MAILGUN_TOKEN', '')
+    telegramToken = os.getenv('TELEGRAM_TOKEN', '')
     logentriesToken = os.getenv('LOGENTRIES_TOKEN', '')
 
     # Now we're ready, so start the server
