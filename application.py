@@ -93,11 +93,25 @@ def telegram():
 
     log.info("Received message from " + telegramUser + ": " + telegramMessage)
 
-    if telegramMessageArray[0] == "create":
+    if telegramMessageArray[0] in ["create", "make"]:
+        # We're going to make a counter
+        counter_id = hashlib.sha224(os.urandom(9)).hexdigest()[:9]
+        counter_name = "Untitled (via Telegram: " + telegramUser + ")"
+        counter_buttonText = "Click Here"
+
+        db.insert({
+            'id': counter_id,
+            'name': counter_name,
+            'buttonText': counter_buttonText,
+            'value': 0
+            'via': "telegram",
+            'user': telegramUser
+        })
+
         response = {
             "method": "sendMessage",
             "chat_id": telegramChatID,
-            "text": "We're not ready yet, but if this had worked, I'd have made a counter"
+            "text": "Hey " + telegramUser + "! All done. Simply visit https://count.re/" + counter_id + " in your browser"
         }
         return returnError(200, ujson.dumps(response), "application/json")
     else:
