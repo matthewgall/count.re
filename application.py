@@ -103,7 +103,7 @@ def telegram():
             'id': counter_id,
             'name': counter_name,
             'buttonText': counter_buttonText,
-            'value': 0
+            'value': 0,
             'via': "telegram",
             'user': telegramUser
         })
@@ -111,7 +111,7 @@ def telegram():
         response = {
             "method": "sendMessage",
             "chat_id": telegramChatID,
-            "text": "Hey " + telegramUser + "! All done. Simply visit https://count.re/" + counter_id + " in your browser"
+            "text": "Mmmmmm... hot off the press @" + telegramUser + ". Simply visit https://count.re/" + counter_id + " in your browser to get started"
         }
         return returnError(200, ujson.dumps(response), "application/json")
     else:
