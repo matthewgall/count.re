@@ -17,6 +17,10 @@ body {
     padding: 40px 15px;
     text-align: center;
 }
+.container .text-muted {
+    margin: 20px 0;
+    color: #707070;
+}
 .navbar-inverse, .panel-primary>.panel-heading, .btn-primary {
     background-color: #0077da;
 }
@@ -27,10 +31,6 @@ body {
     /* Set the fixed height of the footer here */
     height: 60px;
     background-color: #f5f5f5;
-}
-.container .text-muted {
-    margin: 20px 0;
-    color: #707070;
 }
 </style>
 </head>

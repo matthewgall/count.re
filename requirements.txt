@@ -3,4 +3,3 @@ bottle-websocket
 tinydb
 tinydb_smartcache
 ujson
-pylint

@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 
-import os
-import hashlib
-import hmac
-import logging
-import socket
-
-import ujson
+import os, datetime, hashlib, hmac, logging, socket, ujson
 
 from bottle import route, request, response, redirect, hook, error, default_app, view, static_file, template, HTTPError
 from bottle.ext.websocket import GeventWebSocketServer
@@ -14,8 +8,6 @@ from bottle.ext.websocket import websocket
 
 from tinydb import TinyDB, Query
 from tinydb.operations import increment
-
-from pprint import pprint
 
 class StripPathMiddleware(object):
     def __init__(self, app):
@@ -45,6 +37,14 @@ def determine_content_type():
     elif request.headers.get('Accept') == "application/xml":
         response.content_type = 'application/xml'
 
+@hook('after_request')
+def log_to_console():
+    log.info("{} {} {}".format(
+        datetime.datetime.now(),
+        response.status_code,
+        request.url
+    ))
+
 @route('/favicon.ico')
 @route('/import/mailgun', method='GET')
 @error(404)
@@ -70,67 +70,6 @@ def return_version():
         return content
     except:
         return "Unable to open version file."
-
-@route('/import/telegram', method="POST")
-def telegram():
-
-    if telegramToken == '':
-        log.error('TELEGRAM_TOKEN not set. Telegram interface disabled.')
-        return returnError(404, "TELEGRAM_TOKEN not set. Telegram interface disabled.")
-
-    try:
-        telegramObj = ujson.loads(request.body.read())
-    except:
-        return returnError(200, "JSON object provided by Telegram was invalid")
-
-    try:
-        telegramUser = telegramObj['message']['from']['username']
-        telegramChatID = telegramObj['message']['chat']['id']
-        telegramMessage = telegramObj['message']['text']
-        telegramMessageArray = telegramMessage.replace('/', '').split(' ')
-    except:
-        return returnError(200, "JSON object provided by Telegram was invalid")
-
-    log.info("Received message from " + telegramUser + ": " + telegramMessage)
-
-    if telegramMessageArray[0] in ["create", "make"]:
-        # We're going to make a counter
-        counter_id = hashlib.sha224(os.urandom(9)).hexdigest()[:9]
-        counter_name = "Untitled (via Telegram: " + telegramUser + ")"
-        counter_buttonText = "Click Here"
-
-        db.insert({
-            'id': counter_id,
-            'name': counter_name,
-            'buttonText': counter_buttonText,
-            'value': 0,
-            'via': "telegram",
-            'user': telegramUser
-        })
-
-        response = {
-            "method": "sendMessage",
-            "chat_id": telegramChatID,
-            "text": "Mmmmmm... hot off the press @" + telegramUser + ". Simply visit https://count.re/" + counter_id + " in your browser to get started"
-        }
-        return returnError(200, ujson.dumps(response), "application/json")
-    elif telegramMessageArray[0] in ["start", "help"]:
-        response = {
-            "method": "sendMessage",
-            "chat_id": telegramChatID,
-            "parse_mode": "markdown",
-            "text": "Getting started with count.re is easy: \
-            \
-            */create* - Will create a new counter, with some default values \
-            */list* - Will list the counters you have created \
-            */changetitle* - Will change the title of your counter \
-            */changebutton* - Will change the button text which appears when you visit the counter \
-            */info* - Will let you know all about a counter, including the URL \
-            */delete* - Will allow you to delete a counter you have created"
-        }
-        return returnError(200, ujson.dumps(response), "application/json")
-    else:
-        log.info("Encountered an unknown command: " + telegramMessageArray[0])
 
 @route('/import/mailgun', method="POST")
 def incrementCountMail():
@@ -267,14 +206,12 @@ if __name__ == '__main__':
 
     app = default_app()
     
-    appReload = bool(os.getenv('APP_RELOAD', False))
     appSecret = os.getenv('APP_SECRET', '')
 
-    serverHost = os.getenv('SERVER_HOST', 'localhost')
-    serverPort = os.getenv('SERVER_PORT', '5000')
+    serverHost = os.getenv('IP', 'localhost')
+    serverPort = os.getenv('PORT', '5000')
 
     mailgunToken = os.getenv('MAILGUN_TOKEN', '')
-    telegramToken = os.getenv('TELEGRAM_TOKEN', '')
     logentriesToken = os.getenv('LOGENTRIES_TOKEN', '')
 
     # Now we're ready, so start the server
@@ -306,7 +243,6 @@ if __name__ == '__main__':
     
     # Now we're ready, so start the server
     try:
-        log.info("Successfully started application server on " + socket.gethostname())
-        app.run(host=serverHost, port=serverPort, reloader=bool(appReload), server=GeventWebSocketServer)
+        app.run(host=serverHost, port=serverPort, server=GeventWebSocketServer)
     except:
-        log.error("Failed to start application server on " + socket.gethostname())
+        log.error("Failed to start application server")
