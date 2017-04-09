@@ -1,6 +1,6 @@
 <footer class="footer">
     <div class="container">
-        <p class="text-muted">&copy; 2015 count.re</p>
+        <p class="text-muted">&copy; 2015 - 2017 count.re</p>
     </div>
 </footer>
 

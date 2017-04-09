@@ -16,9 +16,6 @@ class StripPathMiddleware(object):
         e['PATH_INFO'] = e['PATH_INFO'].rstrip('/')
         return self.app(e,h)
 
-def buildTelegramURI(path):
-    return "https://api.telegram.org/file/" + telegramToken + path
-
 def mailgunVerify(mail_token, mail_timestamp, mail_signature):
     return mail_signature == hmac.new(
         key=mailgunToken,
@@ -92,22 +89,27 @@ def incrementCountMail():
         return returnError(200, "Bad request, data received was in an unexpected format")
 
     if not mailgunVerify(email_token, email_timestamp, email_signature):
-        log.info("Discarding e-mail from " + email_address, " , signature verification failed")
+        log.info("Discarding e-mail from {}, signature verification failed".format(email_address))
         return returnError(200, "Signature verification failed")
     else:
-        log.info("Accepted e-mail from " + email_address + ", (recipient: " + email_recipient + ")")
+        log.info("Accepted e-mail from {}, (recipient: {})".format(email_address, email_recipient))
 
     # Now, we are going to determine if the counter is active
     if len(db.search(counter.id == counter_id)) < 1:
-        log.info(counter_id + " is not currently active, and therefore will not be incremented")
+        log.info("{} is not currently active, and therefore will not be incremented".format(counter_id))
         return returnError(200, "Counter not found")
 
     # We found the key, so now we can increment it
     db.update(increment('value'), counter.id == counter_id)
 
+    # And inform connected visitors that we have an update
+    count_info = db.search(counter.id == id)
+    for visitor in visitors:
+        visitor.send(ujson.dumps(count_info))
+
     # And return our success message
-    log.info("Successfully incremented counter: " + counter_id)
-    return returnError(200, "Successfully updated value for " + counter_id)
+    log.info("Successfully incremented counter: {}".format(counter_id))
+    return returnError(200, "Successfully updated value for {}".format(counter_id))
 
 @route('/<id>', method='GET')
 @route('/count/<id>', method='GET')
@@ -156,27 +158,27 @@ def incrementCounter(id):
         })
 
         # And now that is done, we'll return a success message, or a redirect
-        log.info("Successfully created counter: " + counter_id)
+        log.info("Successfully created counter: {}".format(counter_id))
 
         if request.query.method == 'web':
             return redirect("/" + counter_id)
         else:
             content = {
                 "id": counter_id,
-                "url": "https://count.re/" + counter_id,
+                "url": "https://count.re/{}".format(counter_id),
             }
             return returnError(200, ujson.dumps(content), "application/json")
     else:
         # We are going to determine if the counter is active
         if len(db.search(counter.id == id)) < 1:
-            log.info(id + " is not currently active, and therefore will not be incremented")
+            log.info("{} is not currently active, and therefore will not be incremented".format(id))
             return returnError(404, "Counter not found")
 
         # We found the key, so now we can increment it
         db.update(increment('value'), counter.id == id)
 
         # And return our success message
-        log.info("Successfully incremented counter: " + id)
+        log.info("Successfully incremented counter: {}".format(id))
         
         # And inform the connected visitors
         count_info = db.search(counter.id == id)
@@ -186,7 +188,7 @@ def incrementCounter(id):
         if request.query.method == 'web':
             return redirect("/" + id)
         else:
-            return returnError(200, "Successfully updated value for " + id)
+            return returnError(200, "Successfully updated value for {}".format(id))
 
 @route('/websocket', apply=[websocket])
 def websocket(ws):
