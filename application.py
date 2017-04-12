@@ -16,6 +16,42 @@ class StripPathMiddleware(object):
 		e['PATH_INFO'] = e['PATH_INFO'].rstrip('/')
 		return self.app(e,h)
 
+def createCounter(id, buttonName, buttonText):
+	
+	# Now, we create the counter using the information we have
+	db.insert({
+		'id': id,
+		'name': buttonName,
+		'buttonText': buttonText,
+		'value': 0
+	})
+
+	# And now that is done, we'll return a success message, or a redirect
+	log.info("Successfully created counter: {}".format(id))
+		
+	return True
+
+def incrementCounter(id):
+	# Is the counter active?
+	if len(db.search(counter.id == id)) < 1:
+		log.info("{} is not currently active, and therefore will not be incremented".format(id))
+		return KeyError
+
+	# We found the key, so now we can increment it
+	db.update(increment('value'), counter.id == id)
+
+	# And return our success message
+	log.info("Successfully incremented counter: {}".format(id))
+	
+	return True
+
+def informVisitors(id):
+		# And inform the connected visitors
+		count_info = db.search(counter.id == id)
+		for visitor in visitors:
+			visitor.send(ujson.dumps(count_info))
+		return True
+
 def mailgunVerify(mail_token, mail_timestamp, mail_signature):
 	return mail_signature == hmac.new(
 		key=mailgunToken,
@@ -100,15 +136,10 @@ def incrementCountMail():
 		return returnError(200, "Counter not found")
 
 	# We found the key, so now we can increment it
-	db.update(increment('value'), counter.id == counter_id)
-
-	# And inform connected visitors that we have an update
-	count_info = db.search(counter.id == id)
-	for visitor in visitors:
-		visitor.send(ujson.dumps(count_info))
+	incrementCounter(counter_id)
+	informVisitors(counter_id)
 
 	# And return our success message
-	log.info("Successfully incremented counter: {}".format(counter_id))
 	return returnError(200, "Successfully updated value for {}".format(counter_id))
 
 @route('/<id>', method='GET')
@@ -136,7 +167,7 @@ def getCounter(id):
 
 @route('/<id>', method='POST')
 @route('/count/<id>', method='POST')
-def incrementCounter(id):
+def postCounter(id):
 	if id == "create":
 		# We're going to create a new counter, and return a JSON blob of the URL
 		counter_id = hashlib.sha224(os.urandom(9)).hexdigest()[:9]
@@ -149,16 +180,7 @@ def incrementCounter(id):
 		if counter_buttonText in ["", None]:
 			counter_buttonText = "Click Here"
 
-		# Now, we create the counter using the information we have
-		db.insert({
-			'id': counter_id,
-			'name': counter_name,
-			'buttonText': counter_buttonText,
-			'value': 0
-		})
-
-		# And now that is done, we'll return a success message, or a redirect
-		log.info("Successfully created counter: {}".format(counter_id))
+		createCounter(counter_id, counter_name, counter_buttonText)
 
 		if request.query.method == 'web':
 			return redirect("/" + counter_id)
@@ -169,24 +191,14 @@ def incrementCounter(id):
 			}
 			return returnError(200, ujson.dumps(content), "application/json")
 	else:
-		# We are going to determine if the counter is active
-		if len(db.search(counter.id == id)) < 1:
-			log.info("{} is not currently active, and therefore will not be incremented".format(id))
+		try:
+			incrementCounter(id)
+			informVisitors(id)
+		except KeyError:
 			return returnError(404, "Counter not found")
-
-		# We found the key, so now we can increment it
-		db.update(increment('value'), counter.id == id)
-
-		# And return our success message
-		log.info("Successfully incremented counter: {}".format(id))
-		
-		# And inform the connected visitors
-		count_info = db.search(counter.id == id)
-		for visitor in visitors:
-			visitor.send(ujson.dumps(count_info))
 			
 		if request.query.method == 'web':
-			return redirect("/" + id)
+			return redirect("/{}".format(id))
 		else:
 			return returnError(200, "Successfully updated value for {}".format(id))
 
