@@ -1,5 +1,4 @@
 bottle
 bottle-websocket
-tinydb
-tinydb_smartcache
+redis
 ujson

@@ -13,6 +13,3 @@ pip-selfcheck.json
 ## codio ##
 .codio
 local/
-
-## application specific ##
-db/*.json
