@@ -27,41 +27,6 @@ def enable_cors(fn):
 			return fn(*args, **kwargs)
 	return _enable_cors
 
-def createCounter(id, buttonName, buttonText):
-	
-	# Now, we create the counter using the information we have
-	r.set(id, ujson.dumps({
-		'name': buttonName,
-		'buttonText': buttonText,
-		'value': 0
-	}))
-
-	# And now that is done, we'll return a success message, or a redirect
-	log.info("Successfully created counter: {}".format(id))
-		
-	return True
-
-def incrementCounter(id):
-	if not r.get(id):
-		log.info("{} is not currently active, and therefore will not be incremented".format(id))
-		return KeyError
-
-	counter = ujson.loads(r.get(id))
-
-	# We found the key, so now we can increment it
-	counter['value'] = counter['value'] + 1
-	r.set(id, ujson.dumps(counter))
-
-	# And return our success message
-	log.info("Successfully incremented counter: {}".format(id))
-	
-	return True
-
-def informVisitors(id):
-	for visitor in visitors:
-		visitor.send(ujson.dumps(r.get(id)))
-	return True
-
 def returnError(code, msg, contentType="text/plain"):
 	response.status = int(code)
 	response.content_type = contentType
@@ -130,7 +95,12 @@ def counter_create(id):
 		if counter_buttonText in ["", None]:
 			counter_buttonText = "Click Here"
 
-		createCounter(counter_id, counter_name, counter_buttonText)
+		
+		r.set(counter_id, ujson.dumps({
+			'name': counter_name,
+			'buttonText': counter_buttonText,
+			'value': 0
+		}))
 
 		if request.query.method == 'web':
 			return redirect("/" + counter_id)
@@ -142,8 +112,17 @@ def counter_create(id):
 			return returnError(200, ujson.dumps(content), "application/json")
 	else:
 		try:
-			incrementCounter(id)
-			informVisitors(id)
+			if not r.get(id):
+				log.info("{} is not currently active, and therefore will not be incremented".format(id))
+				raise KeyError
+
+			counter = ujson.loads(r.get(id))
+
+			# We found the key, so now we can increment it
+			counter['value'] = counter['value'] + 1
+			r.set(id, ujson.dumps(counter))
+
+			counter_inform(id)
 		except KeyError:
 			return returnError(404, "Counter not found")
 			
@@ -151,6 +130,11 @@ def counter_create(id):
 			return redirect("/{}".format(id))
 		else:
 			return returnError(200, "Successfully updated value for {}".format(id))
+
+def counter_inform(id):
+	for visitor in visitors:
+		visitor.send(r.get(id))
+	return True
 
 @route('/websocket', apply=[websocket])
 def websocket(ws):
@@ -178,7 +162,6 @@ if __name__ == '__main__':
 	parser.add_argument("--redis-host", default=os.getenv('REDIS_HOST', 'redis'), help="redis hostname")
 	parser.add_argument("--redis-port", default=os.getenv('REDIS_PORT', 6379), help="redis port")
 	parser.add_argument("--redis-pw", default=os.getenv('REDIS_PW', ''), help="redis password")
-	parser.add_argument("--redis-ttl", default=os.getenv('REDIS_TTL', 60), help="redis time to cache records")
 
 	# Application settings
 	parser.add_argument("--secret", default=os.getenv('APP_SECRET', ''), help="seed for secrets generation")
