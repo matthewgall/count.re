@@ -6,7 +6,6 @@ from bottle import route, request, response, redirect, error, default_app, view,
 from bottle.ext.websocket import GeventWebSocketServer
 from bottle.ext.websocket import websocket
 
-
 def set_content_type(fn):
 	def _return_type(*args, **kwargs):
 		if request.headers.get('Accept') == "application/json":
@@ -122,7 +121,10 @@ def counter_create(id):
 			counter['value'] = counter['value'] + 1
 			r.set(id, ujson.dumps(counter))
 
-			counter_inform(id)
+			global visitors
+			for visitor in visitors:
+				visitor.send(r.get(id))
+
 		except KeyError:
 			return returnError(404, "Counter not found")
 			
@@ -131,13 +133,9 @@ def counter_create(id):
 		else:
 			return returnError(200, "Successfully updated value for {}".format(id))
 
-def counter_inform(id):
-	for visitor in visitors:
-		visitor.send(r.get(id))
-	return True
-
 @route('/websocket', apply=[websocket])
 def websocket(ws):
+	global visitors
 	visitors.add(ws)
 	while True:
 		msg = ws.receive()
@@ -191,6 +189,7 @@ if __name__ == '__main__':
 		)
 
 	try:
+		global visitors
 		visitors = set()
 		app = default_app()
 		app.run(host=args.host, port=args.port, server=GeventWebSocketServer)
