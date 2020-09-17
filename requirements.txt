@@ -1,3 +1,4 @@
+wheel
 bottle
 bottle-websocket
 redis
