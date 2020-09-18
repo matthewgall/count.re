@@ -14,5 +14,11 @@ pip-selfcheck.json
 .codio
 local/
 
+## visual studio code ##
+.vscode/
+
+## application specific ##
+db/*.json
 .direnv/
 .envrc
+secrets.yml
