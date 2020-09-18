@@ -30,8 +30,12 @@ spec:
             value: '0.0.0.0'
           - name: REDIS
             value: redis://${NAME}-redis.${NAMESPACE}.svc.cluster.local:6379
-          - name: RESOLVER
-            value: '1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4'
+          - name: SECRET
+            valueFrom:
+              secretKeyRef:
+                name: ${NAME}-secrets
+                key: token
+            
 ---
 apiVersion: apps/v1
 kind: Deployment
