@@ -160,7 +160,7 @@ if __name__ == '__main__':
 	parser.add_argument("--redis", default=os.getenv('REDIS', 'redis://localhost:6379'), help="redis connection string")
 
 	# Application settings
-	parser.add_argument("--secret", default=os.getenv('APP_SECRET', ''), help="seed for secrets generation")
+	parser.add_argument("--secret", default=os.getenv('SECRET', ''), help="seed for secrets generation")
 	
 	# Verbose mode
 	parser.add_argument("--verbose", "-v", help="increase output verbosity", action="store_true")
