@@ -157,9 +157,7 @@ if __name__ == '__main__':
 	parser.add_argument("-p", "--port", default=os.getenv('PORT', 5000), help="server port")
 
 	# Redis settings
-	parser.add_argument("--redis-host", default=os.getenv('REDIS_HOST', 'redis'), help="redis hostname")
-	parser.add_argument("--redis-port", default=os.getenv('REDIS_PORT', 6379), help="redis port")
-	parser.add_argument("--redis-pw", default=os.getenv('REDIS_PW', ''), help="redis password")
+	parser.add_argument("--redis", default=os.getenv('REDIS', 'redis://localhost:6379'), help="redis connection string")
 
 	# Application settings
 	parser.add_argument("--secret", default=os.getenv('APP_SECRET', ''), help="seed for secrets generation")
@@ -175,13 +173,10 @@ if __name__ == '__main__':
 	log = logging.getLogger(__name__)
 
 	try:
-		r = redis.Redis(
-			host=args.redis_host,
-			port=args.redis_port, 
-			password=args.redis_pw,
-		)
+		if args.redis:
+			r = redis.from_url(args.redis)
 	except:
-		log.error("Unable to connect to redis on {}:{}".format(args.redis_host, args.redis_port))
+		log.fatal("Unable to connect to redis: {}".format(args.redis))
 
 	if args.secret == '':
 		log.error(
