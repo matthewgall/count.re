@@ -123,7 +123,9 @@ def counter_create(id):
 
 			global visitors
 			for visitor in visitors:
-				visitor.send(r.get(id))
+				data = ujson.loads(r.get(id))
+				data['id'] = id
+				visitor.send(ujson.dumps(data))
 
 		except KeyError:
 			return returnError(404, "Counter not found")

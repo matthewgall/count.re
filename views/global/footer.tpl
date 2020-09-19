@@ -22,8 +22,8 @@
         }
         ws.onmessage = function(evt) {
             var message = JSON.parse(evt.data);
-            if (message[0]['id'] == "{{id}}") {
-                $('p#counterVal').text(message[0]['value']);
+            if (message['id'] == "{{id}}") {
+                $('p#counterVal').text(message['value']);
             }
         }
         ws.onclose = function(evt) {
