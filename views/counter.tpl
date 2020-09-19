@@ -16,17 +16,6 @@
                 </fieldset>
             </form>
         </div>
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">Increment by e-mail</h3>
-            </div>
-            <div class="panel-body">
-                <p>
-                    Lazy? Increment this counter by sending an e-mail using your client to 
-                    <strong><a href="mailto:{{id}}@count.re">{{id}}@count.re</a></strong>
-                </p>
-            </div>
-        </div>
         
         <div class="panel panel-primary">
             <div class="panel-heading">
